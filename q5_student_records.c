@@ -57,6 +57,7 @@ void printLine(const char *color, const char *text);
 void printMenu();
 int getIntInput();
 float getFloatInput();
+void clearInputBuffer();
 
 int main() {
     RBTree *tree = createRBTree();
@@ -109,17 +110,22 @@ int main() {
                 break;
 
             case 4:
-    printf(GREEN "Enter student ID to delete: " RESET);
-    id = getIntInput();
-    printf(GREEN "Are you sure you want to delete student ID %d? (y/n): " RESET, id);
-    char confirm = getchar();
-    if (confirm == 'y' || confirm == 'Y') {
-        rbDelete(tree, id);
-        printf(GREEN "Student deleted successfully!\n" RESET);
-    } else {
-        printf(RED_COLOR "Deletion canceled.\n" RESET);
-    }
-    break;
+                printf(GREEN "Enter student ID to delete: " RESET);
+                id = getIntInput();
+                getchar();
+                printf(GREEN "Are you sure you want to delete student ID %d? (y/n): " RESET, id);
+    
+                char confirm[10]; // Buffer for confirmation input
+                fgets(confirm, sizeof(confirm), stdin); // Read the whole line
+
+                // Check if the first character is 'y' or 'Y'
+                if (confirm[0] == 'y' || confirm[0] == 'Y') {
+                    rbDelete(tree, id);
+                    printf(GREEN "Student deleted successfully!\n" RESET);
+                } else {
+                    printf(RED_COLOR "Deletion canceled.\n" RESET);
+                }
+                break;
 
             case 5:
                 printf(GREEN "All students in ascending order of names:\n" RESET);
@@ -141,6 +147,11 @@ int main() {
                 printf(RED_COLOR "Invalid choice. Please try again.\n" RESET);
         }
     }
+}
+
+// Clear input buffer
+void clearInputBuffer() {
+    while (getchar() != '\n'); // Discard characters until newline
 }
 
 // Create a new Red-Black Tree
@@ -396,8 +407,15 @@ RBNode* minimum(RBTree *tree, RBNode *node) {
 
 // Delete a student record by ID
 void rbDelete(RBTree *tree, int id) {
+    if (tree == NULL || tree->root == NULL) {
+        printf(RED_COLOR "Tree is empty.\n" RESET);
+        return; // Tree is empty
+    }
+
     RBNode *z = tree->root;
     RBNode *x, *y;
+
+    // Find the node to delete
     while (z != tree->TNULL) {
         if (z->student.id == id) {
             break;
@@ -408,13 +426,16 @@ void rbDelete(RBTree *tree, int id) {
         }
     }
 
+    // Node not found
     if (z == tree->TNULL) {
         printf(RED_COLOR "Student not found.\n" RESET);
-        return; // Not found
+        return;
     }
 
     y = z;
     int yOriginalColor = y->color;
+
+    // Case 1: Node has no left child
     if (z->left == tree->TNULL) {
         x = z->right;
         if (x != tree->TNULL) x->parent = z->parent;
@@ -425,7 +446,9 @@ void rbDelete(RBTree *tree, int id) {
         } else {
             z->parent->right = x;
         }
-    } else if (z->right == tree->TNULL) {
+    } 
+    // Case 2: Node has no right child
+    else if (z->right == tree->TNULL) {
         x = z->left;
         if (x != tree->TNULL) x->parent = z->parent;
         if (z->parent == NULL) {
@@ -435,10 +458,13 @@ void rbDelete(RBTree *tree, int id) {
         } else {
             z->parent->right = x;
         }
-    } else {
+    } 
+    // Case 3: Node has two children
+    else {
         y = minimum(tree, z->right);
         yOriginalColor = y->color;
         x = y->right;
+
         if (y->parent == z) {
             x->parent = y;
         } else {
@@ -447,6 +473,7 @@ void rbDelete(RBTree *tree, int id) {
             y->right = z->right;
             y->right->parent = y;
         }
+
         if (z->parent == NULL) {
             tree->root = y;
         } else if (z == z->parent->left) {
@@ -458,12 +485,14 @@ void rbDelete(RBTree *tree, int id) {
         y->left->parent = y;
         y->color = z->color;
     }
+
     free(z);
+
+    // Fix the Red-Black Tree properties
     if (yOriginalColor == BLACK) {
         deleteFix(tree, x);
     }
 }
-
 // Update a student's record
 void updateStudent(RBTree *tree, int id, const char *name, float grades) {
     RBNode *node = search(tree, id);

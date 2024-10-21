@@ -1,6 +1,4 @@
-8|Got to the Mall|0
-6|1|1
-5|Clean my room|0
-3|Watch a movie|0
+9|Coding in Python|0
 4|Got to the Market|0
-7|Go Shopping|0
+3|Watch a movie|0
+8|Got to the Mall|0

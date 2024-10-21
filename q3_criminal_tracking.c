@@ -104,13 +104,27 @@ int main() {
 
             printf(GREEN "\nBFS contacts tracing from %s:\n" RESET, graph->names[criminalIndex]);
             bfs(graph, criminalIndex, criminalIndex);
+        
         } else if (choice == 2) {
+
+              // Free the existing graph first
+            // freeGraph(graph);
+
+            // Create a new graph with MAX_PEOPLE
+            graph = createGraph(MAX_PEOPLE);
+            if (!graph) {
+                printf(RED "Memory allocation failed. Exiting." RESET "\n");
+                return 1;
+            }
+
+            // Input number of people
             printf(BLUE "Enter the number of people in the network (max %d): " RESET, MAX_PEOPLE);
             while (scanf("%d", &numPeople) != 1 || numPeople <= 0 || numPeople > MAX_PEOPLE) {
                 clearInputBuffer();
                 printf(RED "Invalid input. Please enter a valid number of people: " RESET);
             }
-
+            graph->numVertices = numPeople; // Set the current number of vertices
+           
             // Input names
             for (int i = 0; i < numPeople; i++) {
                 printf(BLUE "Enter the name of person %d: " RESET, i + 1);
@@ -123,6 +137,12 @@ int main() {
                 scanf("%s", graph->names[i]);
             }
 
+            // Initialize adjacency lists
+            for (int i = 0; i < numPeople; i++) {
+                graph->adjLists[i] = NULL; // Initialize adjacency list for new graph
+            }
+
+            // Input number of connections
             printf(BLUE "Enter the number of connections: " RESET);
             while (scanf("%d", &numConnections) != 1 || numConnections < 0) {
                 clearInputBuffer();
@@ -132,7 +152,7 @@ int main() {
             // Input connections
             for (int i = 0; i < numConnections; i++) {
                 int src, dest;
-                printf(BLUE "Enter connection (person1 person2 - as indices (1 to %d): " RESET, numPeople);
+                printf(BLUE "Enter connection (person2 person5 - as indices (e.g 2 5): " RESET);
                 while (scanf("%d %d", &src, &dest) != 2 || src < 1 || src > numPeople || dest < 1 || dest > numPeople) {
                     clearInputBuffer();
                     printf(RED "Invalid connection. Please enter valid indices (1 to %d): " RESET, numPeople);
@@ -176,7 +196,7 @@ Graph* createGraph(int vertices) {
     graph->adjLists = (Node**)malloc(vertices * sizeof(Node*));
 
     for (int i = 0; i < vertices; i++) {
-        graph->names[i] = NULL;
+        graph->names[i] = NULL; // Initialize to NULL
         graph->adjLists[i] = NULL;
     }
     return graph;
@@ -238,8 +258,8 @@ int dequeue(Queue* q) {
 void bfs(Graph* graph, int startVertex, int criminalIndex) {
     bool *visited = (bool*)calloc(graph->numVertices, sizeof(bool));
     int *level = (int*)calloc(graph->numVertices, sizeof(int));
-    int contacts[MAX_PEOPLE][MAX_PEOPLE] = {0}; // Ensure this has a clear size and is initialized
-    int count[MAX_PEOPLE] = {0};
+    int contacts[MAX_PEOPLE][MAX_PEOPLE] = {0}; // Store contacts by level
+    int count[MAX_PEOPLE] = {0}; // Count of contacts at each level
     
     Queue* q = createQueue();
     if (!q) {
@@ -252,12 +272,16 @@ void bfs(Graph* graph, int startVertex, int criminalIndex) {
     visited[startVertex] = true;
     enqueue(q, startVertex);
 
+    // Initialize the level of the starting vertex
+    level[startVertex] = 0;
+
+    // Traverse the graph
     while (!isEmpty(q)) {
         int current = dequeue(q);
         int currentLevel = level[current];
 
-        // Store the current contact in the appropriate level, skip criminal
-        if (current != criminalIndex && currentLevel < MAX_PEOPLE) {
+        if (current != criminalIndex) {
+            // Store the current contact in the appropriate level
             contacts[currentLevel][count[currentLevel]++] = current;
         }
 
@@ -273,9 +297,9 @@ void bfs(Graph* graph, int startVertex, int criminalIndex) {
     }
 
     // Print contacts by level
-    for (int i = 0; i < MAX_PEOPLE; i++) { // Ensure not to exceed the bounds
+    for (int i = 0; i < MAX_PEOPLE; i++) {
         if (count[i] > 0) {
-            printContacts(i, contacts[i], count[i], graph);
+            printContacts(i, contacts[i], count[i], graph); // i + 1 for level
         }
     }
 
@@ -283,16 +307,16 @@ void bfs(Graph* graph, int startVertex, int criminalIndex) {
     free(level);
     freeQueue(q);
 }
-
 // Print contacts at a given level with formatting
 void printContacts(int level, int* contacts, int count, Graph* graph) {
-    // printf("\n" CYAN "================================================" RESET "\n");
+    if (count == 0) return; // No contacts to print
+    
     printf(YELLOW "Level %d Contacts:\n" RESET, level);
-    printf(YELLOW "------------------------------------------------" RESET "\n");
+    printf(YELLOW "------------------------------------------------\n" RESET);
     for (int i = 0; i < count; i++) {
         printf("%-10s", graph->names[contacts[i]]);
     }
-    printf("\n" CYAN "===============================================" RESET "\n");
+    printf("\n" CYAN "===============================================\n" RESET);
 }
 
 // Free graph memory
