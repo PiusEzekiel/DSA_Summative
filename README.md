@@ -18,15 +18,12 @@ The Weighted Graph Algorithm Visualizer is a command-line application written in
 ## Installation
 ### Compile the Program
 
-    ```bash
     gcc q1_graph_visualizer.c -o q1_graph_visualizer
-    ```
+    
 
 ### Run the Program
 
-    ```bash
     ./q1_graph_visualizer.c
-    ```
 
 ## Usage Instructions
 1. **Input a Graph**: Choose to input your own graph. You will be prompted to enter the number of nodes and edges, followed by the details for each edge in the format `source_node destination_node weight`.
